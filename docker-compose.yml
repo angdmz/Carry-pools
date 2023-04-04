@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  web:
+    build:
+      dockerfile: Dockerfile
+    image: registration:latest
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+  db:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: example_user
+      POSTGRES_PASSWORD: example_password
+      POSTGRES_DB: example_db
+    volumes:
+      - db-data:/var/lib/postgresql/data/
+    ports:
+      - "5432:5432"
+  tests:
+    build:
+      dockerfile: Dockerfile
+    image: registration:latest
+    command: pytest tests
+    env_file:
+      - .env
+    depends_on:
+      - db
+  db-migrate:
+    depends_on:
+      - db
+    build:
+      dockerfile: Dockerfile
+    image: registration:latest
+    command: "alembic upgrade head"
+    env_file: .env
+    working_dir: /app
+    volumes:
+      - .:/app
+  create-migrations:
+    depends_on:
+      - db
+    build:
+      dockerfile: Dockerfile
+    image: registration:latest
+    command: "alembic revision --autogenerate"
+    env_file: .env
+    working_dir: /app
+    volumes:
+      - .:/app
+volumes:
+  db-data:
