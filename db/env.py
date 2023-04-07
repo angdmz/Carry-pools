@@ -62,7 +62,7 @@ def run_migrations_online() -> None:
 
     """    
     
-    settings = DatabaseSettings()
+    settings = DatabaseSettings(db_url_prefix="postgresql")
     db_url = generate_db_url(settings)
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = db_url
