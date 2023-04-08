@@ -4,13 +4,12 @@ from typing import Dict, Any, List
 from uuid import uuid4, UUID
 
 from pydantic import BaseModel
-from sqlalchemy import select
 
 from enums import AccountControllerStatus
 from .exceptions import AccountNotFound
 from logic.participants import RetrievedParticipant
 from models.accounts import AccountController as AccountControllerModel, Address as AddressModel, AccountControllerStatus as AccountControllerStatusModel
-from ..participants.business import RETRIEVE_PARTICIPANT_QUERY, _from_row
+from ..participants.business import RETRIEVE_PARTICIPANT_QUERY
 
 
 class Address(str):
@@ -55,7 +54,7 @@ class RetrievedAccount(BaseModel):
         res_all = res.all()
         if len(res_all) > 0:
             retrieved_address = res_all[0][7]
-            controllers = [_from_row(res_controller[0:6]) for res_controller in res_all]
+            controllers = [RetrievedParticipant.retrieve_participant_from_row(res_controller[0:6]) for res_controller in res_all]
             returnable = RetrievedAccount(address=retrieved_address.public_key, created_at=retrieved_address.created_at, controllers=controllers)
             return returnable
         raise AccountNotFound(address)

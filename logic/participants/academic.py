@@ -37,7 +37,7 @@ class AcademicParticipant(BaseModel):
     __root__: Union[UniversityParticipant, HighschoolParticipant, SchoolParticipant]
 
     async def persist_to(self, persistence):
-        participant = ParticipantModel(id=uuid4(), is_verified=False)
+        participant = ParticipantModel(id=uuid4(), is_verified=False, type=self.__root__.type)
         academic = AcademicModel(full_name=self.__root__.full_name,
                                  education_level=self.__root__.education_level,
                                  id=uuid4(),
@@ -73,6 +73,23 @@ class RetrievedAcademicParticipant(AcademicParticipant):
 
     def is_verified(self):
         return self.__root__.is_verified
+
+    @staticmethod
+    def add_columns_to_query(query):
+        query = query.add_columns(AcademicModel)
+        return query
+
+    @staticmethod
+    def add_joins_to_query(query):
+        query = query.join(AcademicModel, isouter=True)
+        return query
+
+    @staticmethod
+    def from_row(row):
+        participant, academic = row
+        parseable = dict(created_at=participant.created_at, is_verified=participant.is_verified, id=participant.id,
+                         full_name=academic.full_name, education_level=academic.education_level)
+        return RetrievedAcademicParticipant.parse_obj(parseable)
 
 
 class UpdateAcademicParticipant(BaseModel):

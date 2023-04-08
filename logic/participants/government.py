@@ -17,7 +17,7 @@ class GovernmentOrganismParticipant(BaseModel):
     type: Literal[ParticipantType.GOVERNMENT_ORGANISM] = ParticipantType.GOVERNMENT_ORGANISM
 
     async def persist_to(self, persistence):
-        participant = ParticipantModel(id=uuid4(), is_verified=False)
+        participant = ParticipantModel(id=uuid4(), is_verified=False, type=self.type)
         government_organism = GovernmentOrganismModel(full_name=self.full_name, sector=self.sector, id=uuid4(),
                                                       participant_id=participant.id)
         persistence.add(participant)
@@ -36,6 +36,22 @@ class RetrievedGovernmentOrganismParticipant(GovernmentOrganismParticipant):
     def is_sector(self, sector):
         return self.sector == sector
 
+    @staticmethod
+    def add_columns_to_query(query):
+        query = query.add_columns(GovernmentOrganismModel)
+        return query
+
+    @staticmethod
+    def add_joins_to_query(query):
+        query = query.join(GovernmentOrganismModel, isouter=True)
+        return query
+
+    @staticmethod
+    def from_row(row):
+        participant, organism = row
+        parseable = dict(created_at=participant.created_at, is_verified=participant.is_verified, id=participant.id,
+                         full_name=organism.full_name, sector=organism.sector)
+        return RetrievedGovernmentOrganismParticipant.parse_obj(parseable)
 
 class UpdateGovernmentOrganismParticipant(BaseModel):
     full_name: str | None

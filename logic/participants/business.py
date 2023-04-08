@@ -56,44 +56,38 @@ class UpdateParticipant(BaseModel):
         await self.__root__.update_to_persistance(participant_id, persistance)
 
 
-def _from_row(row):
-    types = {
-        CompanyModel: ParticipantType.COMPANY,
-        GovernmentOrganismModel: ParticipantType.GOVERNMENT_ORGANISM,
-        AcademicModel: ParticipantType.ACADEMIC,
-        NaturalPersonModel: ParticipantType.NATURAL_PERSON,
-    }
-
-    participant, company, government, person, academic, identification = row
-    res_dict = dict()
-    for model in (participant, company, government, person, academic):
-        if model:
-            model_dict = model.__dict__
-            for k, v in model_dict.items():
-                if not k in res_dict:
-                    res_dict[k] = v
-            if model.__class__ in types:
-                res_dict["type"] = types[model.__class__]
-
-    if identification:
-        res_dict["identification"] = identification.__dict__
-    returnable = RetrievedParticipant.parse_obj(res_dict)
-    return returnable
-
-
 class RetrievedParticipant(BaseModel):
     __root__: Union[RetrievedNaturalPerson, RetrievedGovernmentOrganismParticipant, RetrievedCompanyParticipant, RetrievedAcademicParticipant]
+    _types = {
+        ParticipantType.COMPANY: RetrievedCompanyParticipant,
+        ParticipantType.GOVERNMENT_ORGANISM: RetrievedGovernmentOrganismParticipant,
+        ParticipantType.ACADEMIC: RetrievedAcademicParticipant,
+        ParticipantType.NATURAL_PERSON: RetrievedNaturalPerson,
+    }
 
     @staticmethod
     async def from_persistance(participant_id: UUID, persistance):
-        query = RETRIEVE_PARTICIPANT_QUERY.filter(ParticipantModel.id == participant_id)
-        res = await persistance.execute(query)
+        new_query = select(ParticipantModel).select_from(ParticipantModel)
+
+        for sub_field in RetrievedParticipant._types.values():
+            new_query = sub_field.add_columns_to_query(new_query)
+            new_query = sub_field.add_joins_to_query(new_query)
+        new_query.filter(ParticipantModel.id == participant_id)
+        res = await persistance.execute(new_query)
 
         res_all = res.all()
         if len(res_all) > 0:
-            returnable = _from_row(res_all[0])
+            returnable = RetrievedParticipant.retrieve_participant_from_row(res_all[0])
             return returnable
         raise ParticipantNotFound(participant_id)
+
+    @staticmethod
+    def retrieve_participant_from_row(row):
+        participant = row[0]
+        parser = RetrievedParticipant._types[participant.type]
+        the_rest = [column for column in row if column is not None]
+        returnable = parser.from_row(the_rest)
+        return returnable
 
     def is_identified_as(self, participant_id):
         return self.__root__.id == participant_id
@@ -150,7 +144,7 @@ class ParticipantListing(BaseModel):
         all_res = results.all()
         returnable = []
         for res in all_res:
-            participant = _from_row(res)
+            participant = RetrievedParticipant.retrieve_participant_from_row(res)
             returnable.append(participant)
 
         return ParticipantListing(results=returnable, next_url=None)

@@ -17,7 +17,7 @@ class CompanyParticipant(BaseModel):
     type: Literal[ParticipantType.COMPANY] = ParticipantType.COMPANY
 
     async def persist_to(self, persistence):
-        participant = ParticipantModel(id=uuid4(), is_verified=False)
+        participant = ParticipantModel(id=uuid4(), is_verified=False, type=self.type)
         company = CompanyModel(full_name=self.full_name, cuit=self.cuit, participant_id=participant.id, id=uuid4())
         persistence.add(participant)
         persistence.add(company)
@@ -34,6 +34,23 @@ class RetrievedCompanyParticipant(CompanyParticipant):
 
     def has_cuit(self, cuit):
         return self.cuit == cuit
+
+    @staticmethod
+    def add_columns_to_query(query):
+        query = query.add_columns(CompanyModel)
+        return query
+
+    @staticmethod
+    def add_joins_to_query(query):
+        query = query.join(CompanyModel, isouter=True)
+        return query
+
+    @staticmethod
+    def from_row(row):
+        participant, company = row
+        parseable = dict(created_at=participant.created_at, is_verified=participant.is_verified, id=participant.id,
+                         full_name=company.full_name, cuit=company.cuit)
+        return RetrievedCompanyParticipant.parse_obj(parseable)
 
 
 class UpdateCompanyParticipant(BaseModel):

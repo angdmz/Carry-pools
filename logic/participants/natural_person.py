@@ -44,11 +44,11 @@ class UpdateNaturalPersonParticipant(BaseModel):
 class NaturalPersonParticipant(BaseModel):
     first_name: str
     last_name: str
-    type: Literal[ParticipantType.NATURAL_PERSON]
+    type: Literal[ParticipantType.NATURAL_PERSON] = ParticipantType.NATURAL_PERSON
     identification: Identification
 
     async def persist_to(self, persistence):
-        participant = ParticipantModel(id=uuid4(), is_verified=False)
+        participant = ParticipantModel(id=uuid4(), is_verified=False, type=self.type)
         person = NaturalPersonModel(first_name=self.first_name, last_name=self.last_name, participant_id=participant.id,
                                     id=uuid4())
         identification = IdentificationModel(type=self.identification.type, value=self.identification.value,
@@ -69,3 +69,19 @@ class RetrievedNaturalPerson(NaturalPersonParticipant):
 
     def has_dni(self, dni):
         return self.identification.type == IdentificationType.DNI and self.identification.value == dni
+
+    @staticmethod
+    def add_columns_to_query(query):
+        query = query.add_columns(NaturalPersonModel, IdentificationModel)
+        return query
+
+    @staticmethod
+    def add_joins_to_query(query):
+        query = query.join(NaturalPersonModel,isouter=True).join(IdentificationModel, isouter=True)
+        return query
+
+    @staticmethod
+    def from_row(row):
+        participant, natural_person, identification = row
+        parseable = dict(created_at=participant.created_at, is_verified=participant.is_verified, id=participant.id, first_name=natural_person.first_name, last_name=natural_person.last_name, identification=dict(type=identification.type, value=identification.value))
+        return RetrievedNaturalPerson.parse_obj(parseable)
