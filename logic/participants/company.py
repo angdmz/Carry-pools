@@ -7,6 +7,7 @@ from typing_extensions import Literal
 from pydantic import BaseModel
 
 from enums import ParticipantType
+from logic.participants.common import RetrievedParticipantBase
 from models import Participant as ParticipantModel, Company as CompanyModel
 from logic.participants.exceptions import ParticipantNotFound
 
@@ -24,11 +25,7 @@ class CompanyParticipant(BaseModel):
         return participant.id
 
 
-class RetrievedCompanyParticipant(CompanyParticipant):
-    created_at: datetime
-    is_verified: bool
-    id: UUID
-
+class RetrievedCompanyParticipant(CompanyParticipant, RetrievedParticipantBase):
     def is_named(self, full_name):
         return self.full_name == full_name
 

@@ -7,6 +7,7 @@ from typing_extensions import Literal
 from pydantic import BaseModel
 
 from enums import IdentificationType, ParticipantType
+from logic.participants.common import RetrievedParticipantBase
 from models import Participant as ParticipantModel, NaturalPerson as NaturalPersonModel, \
     Identification as IdentificationModel
 
@@ -59,10 +60,7 @@ class NaturalPersonParticipant(BaseModel):
         return participant.id
 
 
-class RetrievedNaturalPerson(NaturalPersonParticipant):
-    created_at: datetime
-    is_verified: bool
-    id: UUID
+class RetrievedNaturalPerson(NaturalPersonParticipant, RetrievedParticipantBase):
 
     def is_named(self, first_name, last_name):
         return self.first_name == first_name and self.last_name == last_name

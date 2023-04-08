@@ -1,13 +1,10 @@
-from datetime import datetime
 from typing import Union
 from uuid import uuid4, UUID
-
 from sqlalchemy import select
 from typing_extensions import Literal
-
 from pydantic import BaseModel
-
 from enums import AcademicType, ParticipantType
+from logic.participants.common import RetrievedParticipantBase
 from models import Participant as ParticipantModel, Academic as AcademicModel
 from logic.participants.exceptions import ParticipantNotFound
 
@@ -47,22 +44,16 @@ class AcademicParticipant(BaseModel):
         return participant.id
 
 
-class RetrievedHighschoolParticipant(HighschoolParticipant):
-    created_at: datetime
-    is_verified: bool
-    id: UUID
+class RetrievedHighschoolParticipant(HighschoolParticipant, RetrievedParticipantBase):
+    pass
 
 
-class RetrievedUniversityParticipant(UniversityParticipant):
-    created_at: datetime
-    is_verified: bool
-    id: UUID
+class RetrievedUniversityParticipant(UniversityParticipant, RetrievedParticipantBase):
+    pass
 
 
-class RetrievedSchoolParticipant(SchoolParticipant):
-    created_at: datetime
-    is_verified: bool
-    id: UUID
+class RetrievedSchoolParticipant(SchoolParticipant, RetrievedParticipantBase):
+    pass
 
 
 class RetrievedAcademicParticipant(AcademicParticipant):
