@@ -1,3 +1,4 @@
-from .base import metadata
-from .participants import Participant, Academic, BaseModel, Company, GovernmentOrganism, Identification, NaturalPerson
+from .base import metadata, BaseModel
+from .participants import Participant, Academic, Company, GovernmentOrganism, Identification, NaturalPerson
+from .accounts import AccountController, Address
 from .enums import academic_type, identification_type

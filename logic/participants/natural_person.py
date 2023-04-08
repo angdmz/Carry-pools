@@ -1,6 +1,7 @@
 from datetime import datetime
 from uuid import uuid4, UUID
 
+from sqlalchemy import select
 from typing_extensions import Literal
 
 from pydantic import BaseModel
@@ -11,12 +12,12 @@ from models import Participant as ParticipantModel, NaturalPerson as NaturalPers
 
 
 class Identification(BaseModel):
-    id: str
+    value: str
     type: IdentificationType
 
 
 class IdentificationUpdate(BaseModel):
-    id: str | None
+    value: str | None
     type: IdentificationType | None
 
 
@@ -24,9 +25,20 @@ class UpdateNaturalPersonParticipant(BaseModel):
     first_name: str | None
     last_name: str | None
     identification: IdentificationUpdate | None
+    type: Literal[ParticipantType.NATURAL_PERSON] = ParticipantType.NATURAL_PERSON
 
     async def update_to_persistance(self, participant_id: UUID, persistance):
-        return
+        values = self.dict(exclude={"identification"}, exclude_none=True)
+        query = select(IdentificationModel, NaturalPersonModel).select_from(IdentificationModel).join(NaturalPersonModel, isouter=False).filter(NaturalPersonModel.participant_id == participant_id)
+        res = await persistance.execute(query)
+
+        identification, person = res.all()[0]
+        for field, value in values.items():
+            setattr(person, field, value)
+
+        if self.identification:
+            for field, value in self.identification.dict(exclude_none=True).items():
+                setattr(identification, field, value)
 
 
 class NaturalPersonParticipant(BaseModel):
@@ -39,7 +51,7 @@ class NaturalPersonParticipant(BaseModel):
         participant = ParticipantModel(id=uuid4(), is_verified=False)
         person = NaturalPersonModel(first_name=self.first_name, last_name=self.last_name, participant_id=participant.id,
                                     id=uuid4())
-        identification = IdentificationModel(type=self.identification.type, value=self.identification.id,
+        identification = IdentificationModel(type=self.identification.type, value=self.identification.value,
                                              person_id=person.id)
         persistence.add(participant)
         persistence.add(person)
@@ -50,9 +62,10 @@ class NaturalPersonParticipant(BaseModel):
 class RetrievedNaturalPerson(NaturalPersonParticipant):
     created_at: datetime
     is_verified: bool
+    id: UUID
 
     def is_named(self, first_name, last_name):
         return self.first_name == first_name and self.last_name == last_name
 
     def has_dni(self, dni):
-        return self.identification.type == IdentificationType.DNI and self.identification.id == dni
+        return self.identification.type == IdentificationType.DNI and self.identification.value == dni

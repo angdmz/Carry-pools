@@ -3,16 +3,26 @@ from typing import List
 
 from starlette.testclient import TestClient
 
-from enums import AcademicType, SortOrder
-from participants.business import CompanyParticipant, \
-    RetrievedCompanyParticipant, GovernmentOrganismParticipant, RetrievedGovernmentOrganismParticipant, \
-    AcademicParticipant, RetrievedAcademicParticipant, Participant, ParticipantListing
-from participants.natural_person import NaturalPersonParticipant, RetrievedNaturalPerson, UpdateNaturalPersonParticipant
-from tests.schemas import ObjRef
+from enums import SortOrder
+from logic.participants import Participant, ParticipantListing, RetrievedParticipant
+from logic.participants import GovernmentOrganismParticipant, RetrievedGovernmentOrganismParticipant, \
+    UpdateGovernmentOrganismParticipant
+from logic.participants import CompanyParticipant, RetrievedCompanyParticipant, UpdateCompanyParticipant
+from logic.participants import RetrievedAcademicParticipant, UpdateAcademicParticipant, \
+    RetrievedSchoolParticipant, UniversityParticipant
+from logic.participants.natural_person import NaturalPersonParticipant, RetrievedNaturalPerson, UpdateNaturalPersonParticipant
+from common import ObjRef
+
+
+def test_retrieve_non_existent_participant(client: TestClient):
+    get_res = client.get("/participants/9515d9bb-d4d6-4952-9003-9d7e0436fe58")
+    assert get_res.status_code == http.HTTPStatus.NOT_FOUND
+    content = get_res.json()
+    assert content["detail"] == 'Participant not found. ID: 9515d9bb-d4d6-4952-9003-9d7e0436fe58'
 
 
 def test_natural_person_participant_flow(client: TestClient):
-    participant_creation_data = NaturalPersonParticipant.parse_obj(dict(first_name="John Sunday", last_name="Peron", type="NATURAL_PERSON", identification=dict(type="DNI", id="37993169")))
+    participant_creation_data = NaturalPersonParticipant.parse_obj(dict(first_name="John Sunday", last_name="Peron", type="NATURAL_PERSON", identification=dict(type="DNI", value="37993169")))
     res = client.post("/participants", data=participant_creation_data.json())
     assert res.status_code == http.HTTPStatus.CREATED
 
@@ -25,20 +35,18 @@ def test_natural_person_participant_flow(client: TestClient):
     assert participant.is_named("John Sunday", "Peron")
     assert participant.has_dni("37993169")
 
-    update_data = UpdateNaturalPersonParticipant.parse_obj({"first_name":"Juan Domingo", "identification":{"id": 37993168}})
+    update_data = UpdateNaturalPersonParticipant.parse_obj({"first_name":"Juan Domingo", "identification":{"value": 37993168}})
     update_res = client.patch(f"/participants/{participant_id}", data=update_data.json())
     assert update_res.status_code == http.HTTPStatus.NO_CONTENT
 
     get_res = client.get(f"/participants/{participant_id}")
-
-    assert get_res.status_code == http.HTTPStatus.OK
     participant = RetrievedNaturalPerson.parse_raw(get_res.content)
     assert participant.is_named("Juan Domingo", "Peron")
     assert participant.has_dni("37993168")
     assert not participant.is_verified
 
 def test_company_participant_flow(client: TestClient):
-    participant_creation_data = CompanyParticipant(full_name="A company", cuit="20379931694")
+    participant_creation_data = CompanyParticipant(full_name="A company", cuit="20379931694", type="COMPANY")
     res = client.post("/participants", data=participant_creation_data.json())
     assert res.status_code == http.HTTPStatus.CREATED
 
@@ -49,9 +57,21 @@ def test_company_participant_flow(client: TestClient):
     assert get_res.status_code == http.HTTPStatus.OK
     participant = RetrievedCompanyParticipant.parse_raw(get_res.content)
     assert participant.is_named("A company")
+    assert participant.has_cuit("20379931694")
+    assert not participant.is_verified
+    update_data = UpdateCompanyParticipant.parse_obj({"cuit":"20379931593"})
+    update_res = client.patch(f"/participants/{participant_id}", data=update_data.json())
+    assert update_res.status_code == http.HTTPStatus.NO_CONTENT
+
+    get_res = client.get(f"/participants/{participant_id}")
+    participant = RetrievedCompanyParticipant.parse_raw(get_res.content)
+    assert participant.is_named("A company")
+    assert participant.has_cuit("20379931593")
+    assert not participant.is_verified
+
 
 def test_government_organism_participant_flow(client: TestClient):
-    participant_creation_data = GovernmentOrganismParticipant(full_name="A participant", sector="National")
+    participant_creation_data = GovernmentOrganismParticipant(full_name="Some direction", sector="National", type="GOVERNMENT_ORGANISM")
     res = client.post("/participants", data=participant_creation_data.json())
     assert res.status_code == http.HTTPStatus.CREATED
 
@@ -61,10 +81,20 @@ def test_government_organism_participant_flow(client: TestClient):
 
     assert get_res.status_code == http.HTTPStatus.OK
     participant = RetrievedGovernmentOrganismParticipant.parse_raw(get_res.content)
-    assert participant.is_named("A participant")
+    assert participant.is_named("Some direction")
+
+    update_data = UpdateGovernmentOrganismParticipant.parse_obj({"sector":"Municipal"})
+    update_res = client.patch(f"/participants/{participant_id}", data=update_data.json())
+    assert update_res.status_code == http.HTTPStatus.NO_CONTENT
+
+    get_res = client.get(f"/participants/{participant_id}")
+    participant = RetrievedGovernmentOrganismParticipant.parse_raw(get_res.content)
+    assert participant.is_named("Some direction")
+    assert participant.is_sector("Municipal")
+    assert not participant.is_verified
 
 def test_university_participant_flow(client: TestClient):
-    participant_creation_data = AcademicParticipant(full_name="A participant", education_level=AcademicType.UNIVERSITY)
+    participant_creation_data = UniversityParticipant(full_name="UBA")
     res = client.post("/participants", data=participant_creation_data.json())
     assert res.status_code == http.HTTPStatus.CREATED
 
@@ -74,9 +104,18 @@ def test_university_participant_flow(client: TestClient):
 
     assert get_res.status_code == http.HTTPStatus.OK
     participant = RetrievedAcademicParticipant.parse_raw(get_res.content)
-    assert participant.is_named("A participant")
+    assert participant.is_named("UBA")
 
-def test_all_listing(client: TestClient, example: List[Participant]):
+    update_data = UpdateAcademicParticipant.parse_obj({"education_level":"SCHOOL"})
+    update_res = client.patch(f"/participants/{participant_id}", data=update_data.json())
+    assert update_res.status_code == http.HTTPStatus.NO_CONTENT
+
+    get_res = client.get(f"/participants/{participant_id}")
+    participant = RetrievedSchoolParticipant.parse_raw(get_res.content)
+    assert participant.is_named("UBA")
+    assert not participant.is_verified
+
+def test_all_listing(client: TestClient, example: List[RetrievedParticipant]):
     params = {
         "limit": 10,
         "sort": SortOrder.ASC.value,

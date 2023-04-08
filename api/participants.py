@@ -7,9 +7,9 @@ from fastapi.params import Depends, Path
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from enums import SortOrder
-from participants.business import RetrievedParticipant, Participant, ListLimit, ParticipantListing, UpdateParticipant
+from logic.participants import RetrievedParticipant, Participant, ParticipantListing, UpdateParticipant, ListLimit
 from session.connection import get_async_session
-from tests.schemas import ObjRef
+from common import ObjRef
 
 router = APIRouter()
 
@@ -40,7 +40,7 @@ async def retrieve_participant(participant_id: UUID = Path(..., description="Par
 
 
 @router.patch("/participants/{participant_id}", status_code=http.HTTPStatus.NO_CONTENT)
-async def create_participant(
+async def update_participant(
         participant_id: UUID = Path(..., description="Participant ID to update"),
         participant: UpdateParticipant = Body(..., description="Participant data"),
                              session: AsyncSession = Depends(get_async_session)):

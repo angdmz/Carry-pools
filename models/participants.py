@@ -3,20 +3,9 @@ from sqlalchemy.orm import relationship, mapped_column
 from sqlalchemy.types import String, TIMESTAMP
 from sqlalchemy.dialects.postgresql import UUID
 
+from . import BaseModel
 from .enums import identification_type, academic_type
 from session.connection import Base
-
-
-class BaseModel(Base):
-    __abstract__ = True
-
-    created_at = Column(TIMESTAMP(timezone=True),
-                        nullable=False,
-                        server_default=func.current_timestamp(),)
-    updated_at = Column(TIMESTAMP(timezone=True),
-                        nullable=False,
-                        server_default=func.current_timestamp(),
-                        onupdate=func.current_timestamp())
 
 
 class Participant(BaseModel):

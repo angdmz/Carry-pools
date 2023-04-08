@@ -23,3 +23,10 @@ class AcademicType(str, Enum):
 class SortOrder(str, Enum):
     ASC = "asc"
     DESC = "desc"
+
+
+class AccountControllerStatus(str, Enum):
+    VERIFIED = "VERIFIED"
+    UNVERIFIED = "REJECTED"
+    TO_REVERIFIED = "TO_REVERIFIED"
+    REJECTED = "REJECTED"
