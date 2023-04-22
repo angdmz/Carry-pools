@@ -5,10 +5,9 @@ from uuid import UUID
 from pydantic import BaseModel, ConstrainedInt
 from sqlalchemy import select, asc, desc
 
+from common import Listing
 from enums import ParticipantType, SortOrder
-from models.participants import Participant as ParticipantModel, NaturalPerson as NaturalPersonModel, \
-    Identification as IdentificationModel, Company as CompanyModel, GovernmentOrganism as GovernmentOrganismModel, \
-    Academic as AcademicModel
+from models.participants import Participant as ParticipantModel
 
 from logic.participants.academic import AcademicParticipant, RetrievedAcademicParticipant, UpdateAcademicParticipant
 from logic.participants.company import CompanyParticipant, RetrievedCompanyParticipant, UpdateCompanyParticipant
@@ -16,21 +15,6 @@ from logic.participants.exceptions import ParticipantNotFound
 from logic.participants.government import GovernmentOrganismParticipant, RetrievedGovernmentOrganismParticipant, \
     UpdateGovernmentOrganismParticipant
 from logic.participants.natural_person import UpdateNaturalPersonParticipant, NaturalPersonParticipant, RetrievedNaturalPerson
-
-
-RETRIEVE_PARTICIPANT_QUERY = select(ParticipantModel,
-                                    CompanyModel,
-                                    GovernmentOrganismModel,
-                                    NaturalPersonModel,
-                                    AcademicModel,
-                                    IdentificationModel)\
-    .select_from(ParticipantModel)\
-    .join(CompanyModel, isouter=True)\
-    .join(GovernmentOrganismModel, isouter=True)\
-    .join(AcademicModel, isouter=True)\
-    .join(NaturalPersonModel,isouter=True)\
-    .join(IdentificationModel, isouter=True)
-
 
 
 MAX_PARTICIPANT_LIST_LIMIT = 1000
@@ -67,12 +51,7 @@ class RetrievedParticipant(BaseModel):
 
     @staticmethod
     async def from_persistance(participant_id: UUID, persistance):
-        new_query = select(ParticipantModel).select_from(ParticipantModel)
-
-        for sub_field in RetrievedParticipant._types.values():
-            new_query = sub_field.add_columns_to_query(new_query)
-            new_query = sub_field.add_joins_to_query(new_query)
-        new_query.filter(ParticipantModel.id == participant_id)
+        new_query = RetrievedParticipant.get_retrieval_query().filter(ParticipantModel.id == participant_id)
         res = await persistance.execute(new_query)
 
         res_all = res.all()
@@ -80,6 +59,14 @@ class RetrievedParticipant(BaseModel):
             returnable = RetrievedParticipant.retrieve_participant_from_row(res_all[0])
             return returnable
         raise ParticipantNotFound(participant_id)
+
+    @staticmethod
+    def get_retrieval_query():
+        new_query = select(ParticipantModel).select_from(ParticipantModel)
+        for sub_field in RetrievedParticipant._types.values():
+            new_query = sub_field.add_columns_to_query(new_query)
+            new_query = sub_field.add_joins_to_query(new_query)
+        return new_query
 
     @staticmethod
     def retrieve_participant_from_row(row):
@@ -93,25 +80,9 @@ class RetrievedParticipant(BaseModel):
         return self.__root__.id == participant_id
 
 
-class ParticipantListing(BaseModel):
+class ParticipantListing(Listing):
     results: List[RetrievedParticipant]
     next_url: str | None
-
-    @staticmethod
-    def validate_timestamp_param(timestamp: Union[datetime, int] | None) -> datetime | None:
-        if timestamp is None:
-            return timestamp
-        elif isinstance(timestamp, int):
-            timestamp = datetime.fromtimestamp(timestamp, tz=timezone.utc)
-
-        if not isinstance(timestamp, datetime):
-            raise TypeError(f"Unsupported timestamp type: {type(timestamp)}")
-
-        if timestamp.tzinfo is None:
-            raise ValueError(f"Datetime object provided is missing timezone info: {timestamp}")
-
-        return timestamp
-
 
     @staticmethod
     async def from_persistance(persistance, limit: int = 10,
@@ -122,7 +93,7 @@ class ParticipantListing(BaseModel):
         timestamp_gt = ParticipantListing.validate_timestamp_param(timestamp_gt)
         timestamp_lt = ParticipantListing.validate_timestamp_param(timestamp_lt)
 
-        query = RETRIEVE_PARTICIPANT_QUERY
+        query = RetrievedParticipant.get_retrieval_query()
 
         if timestamp_gt:
             query = query.filter(ParticipantModel.created_at > timestamp_gt)

@@ -115,7 +115,7 @@ def test_university_participant_flow(client: TestClient):
     assert participant.is_named("UBA")
     assert not participant.is_verified
 
-def test_all_listing(client: TestClient, example: List[RetrievedParticipant]):
+def test_all_listing(client: TestClient, participant_example):
     params = {
         "limit": 10,
         "sort": SortOrder.ASC.value,
@@ -127,4 +127,4 @@ def test_all_listing(client: TestClient, example: List[RetrievedParticipant]):
 
     assert len(listing.results) == 4
     for i in range(4):
-        assert example[i] in listing.results
+        assert participant_example[i] in listing.results

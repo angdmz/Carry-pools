@@ -11,7 +11,7 @@ app_settings = AppSettings()
 
 
 @asynccontextmanager
-async def lifespan(application: FastAPI) -> Generator[Any, Any, None]:
+async def lifespan(_: FastAPI) -> Generator[Any, Any, None]:
     yield
 
 app = get_app(app_settings, lifespan)

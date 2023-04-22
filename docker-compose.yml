@@ -10,6 +10,11 @@ services:
       - "8000:8000"
     depends_on:
       - db
+    env_file:
+      - .env
+    working_dir: /app
+    volumes:
+      - .:/app
   db:
     image: postgres
     restart: always
@@ -17,8 +22,6 @@ services:
       POSTGRES_USER: example_user
       POSTGRES_PASSWORD: example_password
       POSTGRES_DB: example_db
-    volumes:
-      - db-data:/var/lib/postgresql/data/
     ports:
       - "5432:5432"
   tests:
@@ -52,5 +55,3 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-volumes:
-  db-data:

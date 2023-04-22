@@ -27,6 +27,12 @@ class SortOrder(str, Enum):
 
 class AccountControllerStatus(str, Enum):
     VERIFIED = "VERIFIED"
-    UNVERIFIED = "REJECTED"
+    UNVERIFIED = "UNVERIFIED"
     TO_REVERIFIED = "TO_REVERIFIED"
     REJECTED = "REJECTED"
+
+
+class RechargeStatus(str, Enum):
+    REJECTED = "REJECTED"
+    SATISFIED = "SATISFIED"
+    WAITING = "WAITING"

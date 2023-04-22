@@ -11,7 +11,7 @@ def get_db_settings():
     return DatabaseSettings()
 
 
-def generate_db_url(settings: DatabaseSettings = Depends(get_db_settings)):
+def generate_db_url(settings: DatabaseSettings):
     return URL.create(
         drivername=settings.db_url_prefix,
         username=settings.db_username,
@@ -22,7 +22,7 @@ def generate_db_url(settings: DatabaseSettings = Depends(get_db_settings)):
     )
 
 
-def get_async_session(database_url: str = Depends(generate_db_url)) -> Type[AsyncSession]:
+def get_async_session(database_url: str) -> Type[AsyncSession]:
     engine = create_async_engine(database_url, echo=True, future=True)
 
     async_session = sessionmaker(

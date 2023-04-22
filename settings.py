@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from pydantic import BaseSettings, SecretStr, AnyHttpUrl
+from pydantic import BaseSettings, SecretStr, AnyHttpUrl, PositiveInt
 
 
 class DatabaseSettings(BaseSettings):
@@ -19,3 +19,7 @@ class AppSettings(BaseSettings):
     sentry_dsn: str | None = None
     path_prefix: str = ""
     api_cors_origins: Sequence[AnyHttpUrl] = ()
+
+
+class AccountsSettings(BaseSettings):
+    balance_limit: PositiveInt = 100000000
