@@ -5,7 +5,7 @@ services:
     build:
       dockerfile: Dockerfile
     image: registration:latest
-    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    command: gunicorn main:app --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
     depends_on:
@@ -28,7 +28,7 @@ services:
     build:
       dockerfile: Dockerfile
     image: registration:latest
-    command: pytest tests
+    command: ["pytest", "tests"]
     env_file:
       - .env
     depends_on:
@@ -55,3 +55,8 @@ services:
     working_dir: /app
     volumes:
       - .:/app
+
+networks:
+  default:
+    external:
+      name: external-example

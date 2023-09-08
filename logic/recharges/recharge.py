@@ -54,7 +54,7 @@ class RetrievedRecharge(ObjRef):
         res = await persistance.execute(query)
         try:
             res_all = res.all()[0]
-            return cls.retrieve_rename_from_row(res_all)
+            return cls.retrieve_recharge_from_row(res_all)
         except IndexError:
             return RechargeNotFound(recharge_id)
 
@@ -72,7 +72,7 @@ class RetrievedRecharge(ObjRef):
         return query
 
     @classmethod
-    def retrieve_rename_from_row(cls, row):
+    def retrieve_recharge_from_row(cls, row):
         recharge, address, status = row[0:3]
         return cls(created_at=recharge.created_at, status=status, address=address, id=recharge.id)
 
@@ -145,8 +145,11 @@ class RechargeListing(Listing):
         all_res = results.all()
         returnable = []
         for res in all_res:
-            participant = RetrievedRecharge.retrieve_rename_from_row(res)
+            participant = RetrievedRecharge.retrieve_recharge_from_row(res)
             returnable.append(participant)
+
+        if len(all_res) == 0:
+            return cls(results=[], next_url=None)
 
         next_params = {
             "limit": limit,

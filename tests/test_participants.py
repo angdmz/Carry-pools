@@ -4,6 +4,7 @@ from typing import List
 from starlette.testclient import TestClient
 
 from enums import SortOrder
+from logic.accounts.business import AddressListing
 from logic.participants import Participant, ParticipantListing, RetrievedParticipant
 from logic.participants import GovernmentOrganismParticipant, RetrievedGovernmentOrganismParticipant, \
     UpdateGovernmentOrganismParticipant
@@ -115,6 +116,19 @@ def test_university_participant_flow(client: TestClient):
     assert participant.is_named("UBA")
     assert not participant.is_verified
 
+def test_disable_participant(client: TestClient, specific_natural_person_participant, recharges_example_from_natural_person):
+    res = client.delete(f"/participants/{specific_natural_person_participant.id}")
+    assert res.status_code == http.HTTPStatus.OK
+    get_res = client.get(f"/participants/{specific_natural_person_participant.id}")
+    assert get_res.status_code == http.HTTPStatus.NOT_FOUND
+    content = get_res.json()
+    assert content["detail"] == f'Participant not found. ID: {specific_natural_person_participant.id}'
+    res_addresses = client.get(f"/addresses/", params={'participant_ids': [specific_natural_person_participant.id]})
+    assert res_addresses.status_code == http.HTTPStatus.OK
+    content = AddressListing.parse_raw(res_addresses.content)
+    assert len(content.results) == 0
+
+
 def test_all_listing(client: TestClient, participant_example):
     params = {
         "limit": 10,
@@ -128,3 +142,16 @@ def test_all_listing(client: TestClient, participant_example):
     assert len(listing.results) == 4
     for i in range(4):
         assert participant_example[i] in listing.results
+
+
+def test_all_listing_empty(client: TestClient):
+    params = {
+        "limit": 10,
+        "sort": SortOrder.ASC.value,
+    }
+    res = client.get(f"/participants", params=params)
+    assert res.status_code == http.HTTPStatus.OK
+    listing = ParticipantListing.parse_raw(res.content)
+    assert listing.next_url is None
+
+    assert len(listing.results) == 0

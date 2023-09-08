@@ -1,5 +1,6 @@
 import http
 from datetime import datetime
+from typing import Set
 from uuid import UUID
 
 from asyncpg import Connection
@@ -12,8 +13,8 @@ from dependencies.accounts import get_balance_limit_per_account
 from dependencies.db import get_session, get_postgres_session
 from enums import SortOrder
 from logic.accounts import Account
-from logic.accounts.business import RetrievedAccount, Address, UnverifiedController, AddressCollection
-from logic.participants import ParticipantListing, ListLimit
+from logic.accounts.business import RetrievedAccount, Address, UnverifiedController, AddressCollection, AddressListing, \
+    ListLimit
 from logic.recharges.recharge import Recharge
 
 router = APIRouter()
@@ -23,15 +24,21 @@ router = APIRouter()
 async def list_accounts(
         limit: ListLimit = Query(10, description=""),
         sort: SortOrder = Query(SortOrder.DESC, description=""),
+        addresses: Set[Address] | None = Query(None, description="Only include addresses from these"),
+        participant_ids: Set[UUID] | None = Query(
+            None, description="Only include addresses controlled by these participants"
+        ),
         timestamp_gt: datetime | None = Query(
             None, description="Only include accounts created with timestamps greater than this value."
         ),
         timestamp_lt: datetime | None = Query(
             None, description="Only include accounts created with timestamps less than this value."
-        ), session: AsyncSession = Depends(get_session)):
+        ),
+        session: AsyncSession = Depends(get_session)):
     async with session.begin():
-        res = await ParticipantListing.from_persistance(persistance=session, limit=limit, sort=sort,
-                                                        timestamp_gt=timestamp_gt, timestamp_lt=timestamp_lt)
+        res = await AddressListing.from_persistance(persistance=session, limit=limit, sort=sort,
+                                                    addresses=addresses, timestamp_gt=timestamp_gt,
+                                                    participant_ids=participant_ids, timestamp_lt=timestamp_lt)
     return res
 
 

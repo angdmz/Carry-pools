@@ -242,8 +242,14 @@ def address_from_natural_person_participant_2(client: TestClient, specific_natur
     create_verified_account(account_creation, client, specific_natural_person_participant_2)
     return account_creation.address
 
+
 @pytest.fixture
-def addresses(client: TestClient, address_from_natural_person_participant, address_2_from_natural_person_participant, address_from_natural_person_participant_2):
+def addresses_example(client: TestClient, address_from_natural_person_participant, address_2_from_natural_person_participant, address_from_natural_person_participant_2):
+    return [address_from_natural_person_participant, address_2_from_natural_person_participant, address_from_natural_person_participant_2, ]
+
+
+@pytest.fixture
+def addresses_to_update(client: TestClient, address_from_natural_person_participant, address_2_from_natural_person_participant, address_from_natural_person_participant_2):
     return [
         AddressWithBalance(address=address_from_natural_person_participant, balance=1000000000),
         AddressWithBalance(address=address_from_natural_person_participant_2, balance=2000000000),

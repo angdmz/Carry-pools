@@ -96,3 +96,11 @@ def test_list_recharges_flow(client: TestClient, recharges_example):
     third_listing = RechargeListing.parse_raw(third_res.content)
     only_satisfied_recharges = {recharge.id for recharge in recharges_example if recharge.status == RechargeStatus.SATISFIED}
     assert {recharge.id for recharge in third_listing.results} == only_satisfied_recharges
+
+
+def test_list_recharges_flow_empty(client: TestClient):
+    res = client.get("/recharges")
+    assert res.status_code == http.HTTPStatus.OK
+    listing = RechargeListing.parse_raw(res.content)
+
+    assert len(listing.results) == 0

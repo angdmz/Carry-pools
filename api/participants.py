@@ -56,3 +56,9 @@ async def create_participant(participant: Participant = Body(..., description="P
     return ObjRef(id=participant_id)
 
 
+@router.delete("/participants/{participant_id}", status_code=http.HTTPStatus.ACCEPTED)
+async def disable_participant(session: AsyncSession = Depends(get_session), participant_id: UUID = Path(..., description="Participant ID to disable"),):
+    async with session.begin():
+        participant = await RetrievedParticipant.from_persistance(participant_id=participant_id, persistance=session)
+        participant.disable()
+    return ObjRef(id=participant_id)
