@@ -36,3 +36,8 @@ class RechargeStatus(str, Enum):
     REJECTED = "REJECTED"
     SATISFIED = "SATISFIED"
     WAITING = "WAITING"
+
+
+class CarryPoolStatus(str, Enum):
+    DRAFT = "DRAFT"
+    APPROVED = "DRAFT"

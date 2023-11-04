@@ -1,4 +1,4 @@
-from sqlalchemy import Column, TIMESTAMP, func
+from sqlalchemy import Column, TIMESTAMP, func, UUID
 
 from session.connection import Base
 
@@ -15,3 +15,8 @@ class BaseModel(Base):
                         nullable=False,
                         server_default=func.current_timestamp(),
                         onupdate=func.current_timestamp())
+
+
+class BaseModelWithID(BaseModel):
+    __abstract__ = True
+    id = Column(UUID, primary_key=True, server_default=func.uuid_generate_v4())
