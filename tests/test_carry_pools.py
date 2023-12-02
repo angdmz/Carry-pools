@@ -3,13 +3,13 @@ from __future__ import annotations
 import http
 import uuid
 from datetime import timedelta
-from uuid import UUID
 
 from pydantic import BaseModel
 from pydantic.types import Decimal
 from starlette.testclient import TestClient
 
 from common import ObjRef
+from logic.carry_pools import TimeBasedVestingSchedule
 
 TEST_TIME_BASED_SCHEDULE = "My test time based schedule"
 
@@ -54,51 +54,6 @@ def test_basic_carry_pool_creation(client: TestClient):
     assert carry_pool.is_named(CARRY_POOL_NAME_2)
     assert carry_pool.slug_is(CARRY_POOL_SLUG)
     assert carry_pool.basis_points_unassigned(100)
-
-
-class BaseVestingSchedule(BaseModel):
-    name: str
-    description: str | None
-    company: UUID
-    vesting_percentage: Decimal
-
-    def is_named(self, name):
-        return self.name == name
-
-    def is_described(self, description):
-        return self.description == description
-
-    def vesting_percentage_is(self, vesting_percentage):
-        return self.vesting_percentage == vesting_percentage
-
-
-class TimeBasedVestingSchedule(BaseVestingSchedule):
-    period_duration: timedelta
-    sequence: int
-
-    def sequence_is(self, sequence):
-        return self.sequence == sequence
-
-    def period_duration_is(self, period_duration):
-        return self.period_duration == period_duration
-
-class Milestone(BaseModel):
-    name: str
-
-
-class MilestoneBasedVestingSchedule(BaseVestingSchedule):
-    milestone: Milestone
-    is_accelerated: bool = False
-
-class AcceleratedMilestonBasedVestingSchedule(MilestoneBasedVestingSchedule):
-    is_accelerated: bool = True
-
-
-class VestingSchedule(BaseModel):
-    __root__: MilestoneBasedVestingSchedule | AcceleratedMilestonBasedVestingSchedule | TimeBasedVestingSchedule
-
-    def is_named(self, name):
-        return self.__root__.is_named(name)
 
 
 def test_vesting_schedule_management_flow(client: TestClient):

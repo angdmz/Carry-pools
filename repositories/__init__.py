@@ -1,0 +1,1 @@
+from .vesting_schedules import Repository as VestingScheduleRepository

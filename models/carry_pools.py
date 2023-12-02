@@ -41,3 +41,32 @@ class Milestone(BaseModelWithID):
     __tablename__ = 'milestones'
 
     name = Column(String, nullable=False)
+
+
+class VestingSchedule(BaseModelWithID):
+    __tablename__ = 'vesting_schedules'
+
+    company_id = mapped_column(ForeignKey('companies.id'), nullable=False)
+    company = relationship('Company', back_populates='vesting_schedules')
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    vesting_percentage = Column(DECIMAL, nullable=False)
+
+
+class MilestoneVestingSchedule(BaseModelWithID):
+    __tablename__ = 'milestone_vesting_schedules'
+
+    vesting_schedule_id = mapped_column(ForeignKey('vesting_schedules.id'), nullable=False)
+    milestone_id = mapped_column(ForeignKey('milestones.id'), nullable=False)
+    description = Column(String, nullable=True)
+    vesting_percentage = Column(DECIMAL, nullable=False)
+    __table_args__ = (UniqueConstraint('vesting_schedule_id', 'milestone_id', name='vesting_schedule_id_milestone_id_uc'),)
+
+class TimeBasedVestingSchedule(BaseModelWithID):
+    __tablename__ = 'time_based_vesting_schedules'
+
+    company_id = mapped_column(ForeignKey('companies.id'), nullable=False)
+    company = relationship('Company', back_populates='vesting_schedules')
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=True)
+    vesting_percentage = Column(DECIMAL, nullable=False)
