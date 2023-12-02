@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from logic.carry_pools import VestingSchedule, MilestoneBasedVestingSchedule, AcceleratedMilestoneBasedVestingSchedule, TimeBasedVestingSchedule
 from models.carry_pools import VestingSchedule as VestingScheduleModel, MilestoneVestingSchedule as MilestoneBasedVestingScheduleModel, TimeBasedVestingSchedule as TimeBasedVestingScheduleModel, Milestone as MilestoneModel
+from repositories.common import BaseRepository
 
 
 class PersistableMilestoneBasedVestingSchedule(MilestoneBasedVestingSchedule):
@@ -38,13 +39,9 @@ class PersistableVestingSchedule(VestingSchedule):
         return cls.parse_obj(vesting_schedule.dict())
 
 
-class Repository:
+class Repository(BaseRepository):
 
     RETRIEVE_QUERY = None
-
-
-    def __init__(self, async_session: AsyncSession):
-        self.async_session = async_session
 
     async def persist(self, vesting_schedule: VestingSchedule):
         persistable = PersistableVestingSchedule.build_from(vesting_schedule)

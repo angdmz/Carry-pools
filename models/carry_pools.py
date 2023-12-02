@@ -17,14 +17,13 @@ class Fund(BaseModelWithID):
     __tablename__ = 'funds'
 
     name = Column(String, nullable=False)
+    customer_id = mapped_column(ForeignKey("customers.id"), nullable=False)
 
 
 class FundCarryPool(BaseModelWithID):
     __tablename__ = 'fund_carry_plans'
 
-    fund = relationship('Fund', back_populates="fund_carry_pools")
     fund_id = mapped_column(ForeignKey("funds.id"), nullable=False)
-    carry_pool = relationship('CarryPool', back_populates="fund_carry_pools")
     carry_pool_id = mapped_column(ForeignKey("carry_pools.id"), nullable=False)
     __table_args__ = (UniqueConstraint('fund_id', 'carry_pool_id', name='fund_id_carry_pool_id_uc'),)
 
@@ -34,7 +33,6 @@ class Deal(BaseModelWithID):
 
     name = Column(String, nullable=False)
     fund_id = mapped_column(ForeignKey("funds.id"), nullable=False)
-    fund = relationship("Fund", back_populates="deals")
     capital_deployed = Column(DECIMAL, nullable=True)
 
 
@@ -42,13 +40,13 @@ class Milestone(BaseModelWithID):
     __tablename__ = 'milestones'
 
     name = Column(String, nullable=False)
+    customer_id = mapped_column(ForeignKey("customers.id"), nullable=False)
 
 
 class VestingSchedule(BaseModelWithID):
     __tablename__ = 'vesting_schedules'
 
-    company_id = mapped_column(ForeignKey('companies.id'), nullable=False)
-    company = relationship('Company', back_populates='vesting_schedules')
+    customer_id = mapped_column(ForeignKey('customers.id'), nullable=False)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
 
