@@ -34,31 +34,24 @@ class TimeBasedVestingSchedule(BaseVestingSchedule):
     def period_duration_is(self, period_duration):
         return self.period_duration == period_duration
 
-    async def persist_to(self, repository):
-        pass
-
 
 class Milestone(BaseModel):
     name: str
 
 
 class MilestoneBasedVestingSchedule(BaseVestingSchedule):
-    milestone: Milestone
+    milestone: UUID
     is_accelerated: bool = False
 
-    async def persist_to(self, session):
-        pass
 
-
-class AcceleratedMilestonBasedVestingSchedule(MilestoneBasedVestingSchedule):
+class AcceleratedMilestoneBasedVestingSchedule(MilestoneBasedVestingSchedule):
     is_accelerated: bool = True
 
 
 class VestingSchedule(BaseModel):
-    __root__: MilestoneBasedVestingSchedule | AcceleratedMilestonBasedVestingSchedule | TimeBasedVestingSchedule
+    __root__: MilestoneBasedVestingSchedule | AcceleratedMilestoneBasedVestingSchedule | TimeBasedVestingSchedule
 
     def is_named(self, name):
         return self.__root__.is_named(name)
 
-    async def persist_to(self, repository):
-        return await self.__root__.persist_to(repository)
+

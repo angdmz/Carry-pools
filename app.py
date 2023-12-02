@@ -6,12 +6,12 @@ from sentry_sdk.integrations.starlette import StarletteIntegration
 
 from exceptions import install_handlers_into_app
 from settings import AppSettings
-from api import participants_router, accounts_router
+from api import participants_router, carry_pools_router
 
 def get_app(settings: AppSettings, lifespan):
 
     app = FastAPI(
-        title="Registración BFA",
+        title="Carry Pools API",
         lifespan=lifespan
     )
 
@@ -28,7 +28,6 @@ def get_app(settings: AppSettings, lifespan):
     )
 
     app.include_router(participants_router)
-    app.include_router(accounts_router)
-    app.include_router(recharges_router)
+    app.include_router(carry_pools_router)
     install_handlers_into_app(app)
     return app

@@ -1,4 +1,5 @@
-from sqlalchemy import Column, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, ForeignKey, UniqueConstraint, Integer
+from sqlalchemy.dialects.postgresql import DATERANGE
 from sqlalchemy.orm import mapped_column, relationship
 from sqlalchemy.types import String, DECIMAL
 
@@ -50,7 +51,6 @@ class VestingSchedule(BaseModelWithID):
     company = relationship('Company', back_populates='vesting_schedules')
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
-    vesting_percentage = Column(DECIMAL, nullable=False)
 
 
 class MilestoneVestingSchedule(BaseModelWithID):
@@ -58,15 +58,13 @@ class MilestoneVestingSchedule(BaseModelWithID):
 
     vesting_schedule_id = mapped_column(ForeignKey('vesting_schedules.id'), nullable=False)
     milestone_id = mapped_column(ForeignKey('milestones.id'), nullable=False)
-    description = Column(String, nullable=True)
-    vesting_percentage = Column(DECIMAL, nullable=False)
+    milestone_vesting_percentage = Column(DECIMAL, nullable=False)
     __table_args__ = (UniqueConstraint('vesting_schedule_id', 'milestone_id', name='vesting_schedule_id_milestone_id_uc'),)
+
 
 class TimeBasedVestingSchedule(BaseModelWithID):
     __tablename__ = 'time_based_vesting_schedules'
 
-    company_id = mapped_column(ForeignKey('companies.id'), nullable=False)
-    company = relationship('Company', back_populates='vesting_schedules')
-    name = Column(String, nullable=False)
-    description = Column(String, nullable=True)
-    vesting_percentage = Column(DECIMAL, nullable=False)
+    period_duration = Column(DATERANGE(), nullable=False)
+    period_vesting_percentage =Column(DECIMAL, nullable=False)
+    sequence = Column(Integer, nullable=False)

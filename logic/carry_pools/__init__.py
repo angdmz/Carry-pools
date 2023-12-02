@@ -1,1 +1,1 @@
-from .business import Milestone, MilestoneBasedVestingSchedule, AcceleratedMilestonBasedVestingSchedule, TimeBasedVestingSchedule, VestingSchedule, BaseVestingSchedule
+from .business import Milestone, MilestoneBasedVestingSchedule, AcceleratedMilestoneBasedVestingSchedule, TimeBasedVestingSchedule, VestingSchedule, BaseVestingSchedule
