@@ -12,10 +12,6 @@ class Customer(BaseModel):
         return self.name == name
 
 
-class RetrievedCustomer(ObjRef):
-    name: str
+class RetrievedCustomer(Customer):
     created_at: datetime
     updated_at: datetime
-
-    def is_named(self, name):
-        return self.name == name

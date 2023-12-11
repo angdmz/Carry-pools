@@ -47,7 +47,7 @@ async def update_customer(customer_id: UUID = Path(..., description="Customer ID
                           customer_repository: Repository=Depends(get_customer_repository),
                           session: AsyncSession = Depends(get_session)):
     async with session.begin():
-        vesting_schedule_id = await customer_repository.update(customer_id, customer)
+        await customer_repository.update(customer_id, customer)
 
 
 @router.get("/customers", status_code=http.HTTPStatus.OK)

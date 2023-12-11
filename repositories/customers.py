@@ -1,13 +1,14 @@
 from datetime import datetime
 from uuid import UUID, uuid4
 
+from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from enums import SortOrder
 from logic.customers import Customer,  CustomerNotFound, RetrievedCustomer
 from models.customers import Customer as CustomerModel
-from repositories.common import BaseRepository, Persistable
+from repositories.common import BaseRepository, Persistable, Filter
 
 
 class PersistableCustomer(Customer, Persistable):
@@ -16,6 +17,13 @@ class PersistableCustomer(Customer, Persistable):
         customer = CustomerModel(id=uuid4(), name=self.name)
         session.add(customer)
         return customer.id
+
+
+class ListFilters(BaseModel):
+    timestamp_gt: datetime
+    timestamp_lt: datetime
+
+
 
 
 class Repository(BaseRepository):
@@ -52,5 +60,9 @@ class Repository(BaseRepository):
             return
         raise CustomerNotFound(customer_id)
 
-    async def list(self, limit: int = 10, sort: SortOrder = SortOrder.ASC, timestamp_gt: datetime | int | None = None, timestamp_lt: datetime | int | None = None ):
+    async def list(self, limit: int = 10, sort: SortOrder = SortOrder.ASC, filters: list[Filter] = None):
+        if not filters:
+            filters = []
+        for query_filter in filters:
+            query_filter.filter()
         pass
